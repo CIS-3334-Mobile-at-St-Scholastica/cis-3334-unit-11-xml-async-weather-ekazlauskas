@@ -16,6 +16,9 @@ import java.util.Scanner;
 
 import static org.xmlpull.v1.XmlPullParser.TYPES;
 
+/**
+ * AsyncDownloadXML, pulls the weather xml and displays the required information to the user.
+ */
 public class AsyncDownloadXML extends AsyncTask<MainActivity, String, String> {
 
     MainActivity mainActivityLink;
@@ -34,16 +37,21 @@ public class AsyncDownloadXML extends AsyncTask<MainActivity, String, String> {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
             XmlPullParser xpp = factory.newPullParser();
 
-            String  weatherStrURL =  "http://api.openweathermap.org/data/2.5/weather?zip=55811,us&appid=5aa6c40803fbb300fe98c6728bdafce7&mode=xml&units=imperial";
+            //sets input for pullparser by looking at weather URL
+            String  weatherStrURL =  "http://api.openweathermap.org/data/2.5/weather?zip=" + mainActivityLink.getLocation() + ",us&appid=5aa6c40803fbb300fe98c6728bdafce7&mode=xml&units=imperial";
             URL weatherURL =  new URL(weatherStrURL);
             InputStream stream = weatherURL.openStream();
             xpp.setInput(stream, null);
             int eventType = xpp.getEventType();
 
+            //creates string values or both temperature and wind speed
             String tempStr = "Updating...";			// Temperature Update String
             String windStr = "Updating...";			// Wind Update String
             publishProgress(tempStr,windStr);
 
+            //executes a while loop continuously before the application hits the end of the
+            //document. If the application runs into the speed value for the given city, it will provide
+            //the output on the given editText field.
             Log.v("== CIS 3334 ==","AsyncDownloadXML repeat until end of document arrives");
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 Log.v("== CIS 3334 ==","AsyncDownloadXML eventType = "+TYPES[eventType]);
@@ -55,9 +63,9 @@ public class AsyncDownloadXML extends AsyncTask<MainActivity, String, String> {
                     Log.v("== CIS 3334 ==","Start tag found with name = "+tag);
                     if (tag.equals("speed")){
                         // XML should look like: <speed value="11.41" name="Strong breeze"/>
-
-                        // ======= CIS 3334 add code here to process wing speed =======
-
+                        windStr = xpp.getAttributeValue(null, "value");
+                        Log.v("== CIS 3334 ==","Wind =" + windStr);
+                        publishProgress(tempStr,windStr);	// Update the display
                     }
                     if (tag.equals("temperature")){
                         // XML should look like: <temperature value="37.47" min="33.8" max="41" unit="fahrenheit"/>
@@ -70,6 +78,7 @@ public class AsyncDownloadXML extends AsyncTask<MainActivity, String, String> {
             }
            return "Successfully updated weather";
 
+            //catches exceptions
         } catch (IOException e) {
             Log.v("== CIS 3334 -- ERROR ==","AsyncDownloadXML doInBackground IOException");
             Log.v("== CIS 3334 -- ERROR ==",e.getMessage());
@@ -85,6 +94,12 @@ public class AsyncDownloadXML extends AsyncTask<MainActivity, String, String> {
         }
     }
 
+    /**
+     * onProgressUpdate, after the application finds the temperature and the wind speed for the
+     * given city the user entered, it first displays the temperature within the editText field and then
+     * displays the wind speed within the specific editText field.
+     * @param update
+     */
     @Override
     protected void onProgressUpdate(String... update) {
         Log.v("== CIS 3334 ==","in onProgressUpdate");
@@ -92,6 +107,10 @@ public class AsyncDownloadXML extends AsyncTask<MainActivity, String, String> {
         mainActivityLink.setWind(update[1]);
     }
 
+    /**
+     * onPostExecute, when application is done executing, it setStatus to done/complete.
+     * @param result
+     */
     @Override
     protected void onPostExecute(String result) {
         Log.v("== CIS 3334 ==", "in onPostExecute");
